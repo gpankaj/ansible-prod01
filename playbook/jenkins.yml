@@ -1,0 +1,11 @@
+---
+  - hosts: jenkins
+    become: true
+    tasks:
+      - name: install jenkins
+        apt: name={{item}} state=present update_cache=yes
+        with_items:
+          - jenkins
+
+      - name: ensure jenkins started
+        service: name=jenkins state=started enabled=yes
