@@ -8,3 +8,18 @@
       - name : Ensure NGINX started
         service: name=nginx state=started enabled=yes
 
+      - name : configure NGING site
+        template: src=/home/ubuntu/ansible/templates/nginx.conf.j2 dest=/etc/nginx/sites-available/FlaskApp mode=0644
+        notify: restart nginx
+
+      - name: De-Activate Default Apache configuration
+        file: path=/etc/nginx/sites-enabled/default state=absent
+        notify: restart nginx
+
+      - name: Activate Application
+        file: src=/etc/nginx/sites-available/FlaskApp dest=/etc/nginx/sites-enabled/FlaskApp state=link
+        notify: restart nginx
+
+    handlers:
+      - name: restart nginx
+        service: name=nginx state=restarted

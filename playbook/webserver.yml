@@ -3,7 +3,7 @@
    become: true
    tasks:
     - name: INSTALL ALL WEBSERVER COMPONENTS 
-      apt: name = {{item}} state=present update_cache=yes
+      apt: name={{ item }} state=installed update_cache=yes
       with_items:
         - apache2
         - libapache2-mod-wsgi
@@ -17,6 +17,33 @@
       apache2_module: state=present name=wsgi
       notify: restart apache2
 
+    - name: Create Clone folder
+      action: file path=/tmp/app state=directory
+
+    - name: Create app folder
+      action: file path=/var/www/demo state=directory
+
+    - name: Clone the workspace
+      git:  repo=https://github.com/gpankaj/flask-knowledgebase.git dest=/tmp/app
+
+    - name: Copy demo app source
+      synchronize: src=/tmp/app/ dest=/var/www/demo/
+      notify: restart apache2
+
+    - name: Install Python dependencies
+      pip: requirements=/var/www/demo/requirements.txt
+      notify: restart apache2
+
+    - name: Copy Apache Virtual host configuration file
+      copy: src=/var/www/demo/FlaskApp.conf dest=/etc/apache2/sites-available/FlaskApp.conf
+
+    - name: De-Activiate default apache site
+      file: path=/etc/apache2/sites-enabled/000-default.conf state=absent
+      notify: restart apache2
+
+    - name: Activate KB site
+      file: src=/etc/apache2/sites-available/FlaskApp.conf dest=/etc/apache2/sites-enabled/FlaskApp.conf state=link
+      notify: restart apache2
 
    handlers:
      - name: restart apache2
